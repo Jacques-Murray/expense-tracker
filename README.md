@@ -1,57 +1,126 @@
 # Expense Tracker
 
-A Python-based GUI application for tracking daily expenses with visualization capabilities.
+A modern web-based expense tracking application built with Flask and Bootstrap. Track your expenses, visualize spending patterns, and manage your budget with ease.
 
 ## Features
 
-- Add, update, and delete expenses
-- Categorize expenses (Food, Transport, Entertainment, Bills, Shopping, Other)
-- View expenses in a organized table format
-- Visualize expenses with charts:
-  - Pie chart showing category-wise distribution
-  - Bar chart showing daily expense trends
-- Export expenses to CSV file
+- **Dashboard Overview**
+  - Monthly expense summary
+  - Daily average spending
+  - Budget progress visualization
+  - Daily expense chart
+  - Quick add expense form
 
-## Requirements
+- **Expense Management**
+  - Add, view, and delete expenses
+  - Categorize expenses
+  - Filter expenses by category and date range
+  - Sort expenses by date
 
-- Python 3.8 or higher (tested up to Python 3.12)
-- Required packages:
-  - pandas
-  - matplotlib
+- **Statistics and Visualization**
+  - Category-wise expense breakdown
+  - Visual representation with charts
+  - Percentage analysis of spending
+
+- **Customization**
+  - Multiple currency support (USD, EUR, GBP, ZAR, etc.)
+  - Configurable date formats
+  - Adjustable monthly budget
 
 ## Installation
 
-1. Clone this repository
-2. Install required packages:
+1. Clone the repository:
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/your-username/expense-tracker.git
+cd expense-tracker
 ```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -e .
+```
+
+## Configuration
+
+1. Create a `.env` file in the root directory:
+```env
+FLASK_APP=expense_tracker.web.app
+FLASK_ENV=development
+SECRET_KEY=your-secret-key
+```
+
+2. Initialize the application:
+```bash
+flask run
+```
+
+The application will be available at `http://localhost:5000`.
 
 ## Usage
 
-Run the application:
-```bash
-python expense_tracker.py
+1. **Dashboard**
+   - View your monthly spending overview
+   - Track budget progress
+   - Add quick expenses
+   - View recent transactions
+
+2. **Expenses**
+   - Add detailed expenses with categories
+   - Filter and sort your expense history
+   - Delete unwanted entries
+
+3. **Statistics**
+   - Analyze spending patterns
+   - View category-wise breakdowns
+   - Track expense distribution
+
+4. **Settings**
+   - Choose your preferred currency
+   - Set date format
+   - Configure monthly budget
+
+## Development
+
+### Project Structure
+```
+expense_tracker/
+├── expense_tracker/
+│   ├── models/
+│   │   ├── expense.py
+│   │   └── expense_manager.py
+│   └── web/
+│       ├── app.py
+│       ├── config.py
+│       └── templates/
+├── tests/
+│   ├── unit/
+│   └── ui/
+├── .env
+├── .flaskenv
+├── pyproject.toml
+└── setup.py
 ```
 
-## How to Use
+### Testing
 
-1. **Adding Expenses**:
-   - Enter the amount
-   - Select a category
-   - Add a description (optional)
-   - Click "Add Expense"
+Run the test suite:
+```bash
+pytest
+```
 
-2. **Managing Expenses**:
-   - View all expenses in the table
-   - Select and delete unwanted expenses
-   - Export expenses to CSV for external analysis
+## Contributing
 
-3. **Visualizing Data**:
-   - Click "Show Charts" to view:
-     - Category-wise distribution
-     - Daily expense trends
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## Data Storage
+## License
 
-Expenses are stored locally in a JSON file (`expenses.json`) for persistence between sessions.
+This project is licensed under the MIT License - see the LICENSE file for details.
