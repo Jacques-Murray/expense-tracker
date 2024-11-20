@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Expense Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Category Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Total Expenses:</span>
+                    <strong>${{ "%.2f"|format(total) }}</strong>
+                </div>
+                <hr>
+                {% for stat in category_stats %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>{{ stat.category }}</span>
+                        <strong>${{ "%.2f"|format(stat.amount) }}</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ stat.color }}"
+                             style="width: {{ "%.1f"|format(stat.percentage) }}%">
+                            {{ "%.1f"|format(stat.percentage) }}%
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ category_stats|map(attribute='category')|list|tojson }},
+            datasets: [{
+                data: {{ category_stats|map(attribute='amount')|list|tojson }},
+                backgroundColor: {{ category_stats|map(attribute='color')|map('prefix', 'bg-')|list|tojson }},
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${context.label}: $${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

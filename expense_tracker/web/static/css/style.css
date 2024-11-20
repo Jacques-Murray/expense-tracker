@@ -1,0 +1,70 @@
+/* Custom styles for Expense Tracker */
+
+/* Navbar customization */
+.navbar-brand i {
+    margin-right: 0.5rem;
+}
+
+/* Card customization */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Form customization */
+.form-control:focus,
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Table customization */
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Category badges */
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+
+/* Progress bar customization */
+.progress {
+    height: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Chart container */
+canvas {
+    max-height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin-bottom: 0;
+    }
+}
+
+/* Footer customization */
+.footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
