@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Settings</h2>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('save_settings') }}">
+                <!-- Currency Settings -->
+                <div class="mb-3">
+                    <label for="currency" class="form-label">Currency</label>
+                    <select class="form-select" id="currency" name="currency">
+                        {% for code, config in currencies.items() %}
+                        <option value="{{ code }}" {% if code == current_currency %}selected{% endif %}>
+                            {{ config.symbol }} - {{ code }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Choose your preferred currency for displaying amounts.</div>
+                </div>
+
+                <!-- Date Format Settings -->
+                <div class="mb-3">
+                    <label for="date_format" class="form-label">Date Format</label>
+                    <select class="form-select" id="date_format" name="date_format">
+                        {% for format, example in date_formats.items() %}
+                        <option value="{{ format }}" {% if format == current_date_format %}selected{% endif %}>
+                            {{ format }} ({{ example }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Choose how dates should be displayed.</div>
+                </div>
+
+                <!-- Monthly Budget -->
+                <div class="mb-3">
+                    <label for="monthly_budget" class="form-label">Monthly Budget</label>
+                    <div class="input-group">
+                        <span class="input-group-text">{{ currency_symbol }}</span>
+                        <input type="number" class="form-control" id="monthly_budget" name="monthly_budget"
+                            value="{{ monthly_budget }}" step="0.01" min="0">
+                    </div>
+                    <div class="form-text">Set your monthly budget target.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

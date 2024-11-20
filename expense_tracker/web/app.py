@@ -2,10 +2,15 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Dict
+import json
 
-from flask import Flask, flash, jsonify, render_template, request
+from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, session
 
 from expense_tracker.models.expense_manager import ExpenseManager
+from expense_tracker.web.config import (
+    CURRENCIES, DATE_FORMATS, DEFAULT_CURRENCY,
+    DEFAULT_DATE_FORMAT, DEFAULT_BUDGET, CurrencyConfig
+)
 
 app = Flask(__name__)
 app.secret_key = "your-secret-key-here"  # Change this in production
@@ -23,6 +28,32 @@ CATEGORY_COLORS = {
     "Others": "secondary",
 }
 
+def get_current_settings():
+    """Get current user settings with defaults."""
+    return {
+        'currency': session.get('currency', DEFAULT_CURRENCY),
+        'date_format': session.get('date_format', DEFAULT_DATE_FORMAT),
+        'monthly_budget': session.get('monthly_budget', DEFAULT_BUDGET)
+    }
+
+def format_amount(amount: Decimal) -> str:
+    """Format amount according to current currency settings."""
+    currency = CURRENCIES[session.get('currency', DEFAULT_CURRENCY)]
+    formatted = f"{float(amount):,.2f}"
+    
+    if currency.decimal_separator != '.':
+        formatted = formatted.replace('.', currency.decimal_separator)
+    if currency.thousands_separator != ',':
+        formatted = formatted.replace(',', currency.thousands_separator)
+    
+    if currency.position == 'prefix':
+        return f"{currency.symbol}{formatted}"
+    return f"{formatted} {currency.symbol}"
+
+def format_date(date: datetime) -> str:
+    """Format date according to current regional settings."""
+    date_format = DATE_FORMATS[session.get('date_format', DEFAULT_DATE_FORMAT)]
+    return date.strftime(date_format)
 
 @app.route("/")
 def index():
@@ -56,8 +87,8 @@ def index():
         "index.html",
         current_month=start_date.strftime("%B %Y"),
         recent_expenses=sorted(expenses, key=lambda x: x.date, reverse=True)[:5],
-        monthly_total=monthly_total,
-        daily_average=daily_average,
+        monthly_total=format_amount(monthly_total),
+        daily_average=format_amount(daily_average),
         budget_percentage=budget_percentage,
         dates=dates,
         daily_expenses=daily_expenses,
@@ -115,7 +146,7 @@ def stats():
         category_stats.append(
             {
                 "category": category,
-                "amount": amount,
+                "amount": format_amount(amount),
                 "percentage": percentage,
                 "color": CATEGORY_COLORS.get(category, "secondary"),
             }
@@ -124,7 +155,7 @@ def stats():
     return render_template(
         "stats.html",
         category_stats=category_stats,
-        total=total,
+        total=format_amount(total),
     )
 
 
@@ -206,7 +237,7 @@ def dashboard_data():
                 "category": e.category,
                 "category_color": CATEGORY_COLORS.get(e.category, "secondary"),
                 "description": e.description,
-                "amount": float(e.amount),
+                "amount": format_amount(e.amount),
             }
         )
 
@@ -214,12 +245,55 @@ def dashboard_data():
         {
             "dates": dates,
             "daily_expenses": daily_expenses,
-            "monthly_total": float(monthly_total),
-            "daily_average": float(daily_average),
+            "monthly_total": format_amount(monthly_total),
+            "daily_average": format_amount(daily_average),
             "budget_percentage": budget_percentage,
             "recent_expenses": recent_expenses,
         }
     )
+
+
+@app.route("/settings", methods=["GET"])
+def settings():
+    """Render the settings page."""
+    current = get_current_settings()
+    
+    # Generate date format examples
+    date_examples = {
+        format_name: datetime.now().strftime(format_str)
+        for format_name, format_str in DATE_FORMATS.items()
+    }
+    
+    return render_template(
+        "settings.html",
+        currencies=CURRENCIES,
+        date_formats=date_examples,
+        current_currency=current['currency'],
+        current_date_format=current['date_format'],
+        monthly_budget=current['monthly_budget'],
+        currency_symbol=CURRENCIES[current['currency']].symbol
+    )
+
+
+@app.route("/settings", methods=["POST"])
+def save_settings():
+    """Save user settings."""
+    currency = request.form.get('currency')
+    date_format = request.form.get('date_format')
+    monthly_budget = request.form.get('monthly_budget')
+    
+    if currency in CURRENCIES:
+        session['currency'] = currency
+    if date_format in DATE_FORMATS:
+        session['date_format'] = date_format
+    if monthly_budget:
+        try:
+            session['monthly_budget'] = float(monthly_budget)
+        except ValueError:
+            flash('Invalid budget amount', 'error')
+    
+    flash('Settings saved successfully!', 'success')
+    return redirect(url_for('settings'))
 
 
 if __name__ == "__main__":
