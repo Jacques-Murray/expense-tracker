@@ -1,2 +1,14 @@
+# Runtime dependencies
 pandas==2.0.3
 matplotlib==3.7.1
+
+# Development dependencies
+pre-commit==3.5.0
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+flake8-docstrings==1.7.0
+flake8-bugbear==23.9.16
+flake8-comprehensions==3.14.0
+flake8-simplify==0.21.0
+mypy==1.7.0
