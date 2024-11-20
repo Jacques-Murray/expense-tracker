@@ -64,7 +64,7 @@
                                     </span>
                                 </td>
                                 <td>{{ expense.description }}</td>
-                                <td class="text-end">${{ "%.2f"|format(expense.amount) }}</td>
+                                <td class="text-end">{{ format_amount(expense.amount) }}</td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-danger"
                                             onclick="deleteExpense({{ expense.id }})">
@@ -94,9 +94,16 @@
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            {% set currency = get_current_settings()['currency'] %}
+                            {% if currency in ['USD', 'GBP', 'ZAR'] %}
+                            <span class="input-group-text">{{ CURRENCIES[currency].symbol }}</span>
                             <input type="number" step="0.01" min="0.01" class="form-control"
                                    id="amount" name="amount" required>
+                            {% else %}
+                            <input type="number" step="0.01" min="0.01" class="form-control"
+                                   id="amount" name="amount" required>
+                            <span class="input-group-text">{{ CURRENCIES[currency].symbol }}</span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="mb-3">
