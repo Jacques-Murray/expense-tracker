@@ -142,6 +142,7 @@ def index():
         monthly_budget=format_amount(monthly_budget),
         dates=dates,
         daily_expenses=daily_expenses,
+        CURRENCIES=CURRENCIES,
     )
 
 

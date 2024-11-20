@@ -77,7 +77,14 @@
                         <div class="col-md-3">
                             <label for="amount" class="form-label">Amount</label>
                             <div class="input-group">
+                                {% set currency = get_current_settings()['currency'] %}
+                                {% if currency in ['USD', 'GBP', 'ZAR'] %}
+                                <span class="input-group-text">{{ CURRENCIES[currency].symbol }}</span>
                                 <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                                {% else %}
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                                <span class="input-group-text">{{ CURRENCIES[currency].symbol }}</span>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-3">
