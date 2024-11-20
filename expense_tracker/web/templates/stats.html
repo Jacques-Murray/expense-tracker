@@ -23,14 +23,14 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-3">
                     <span>Total Expenses:</span>
-                    <strong>${{ "%.2f"|format(total) }}</strong>
+                    <strong>{{ total }}</strong>
                 </div>
                 <hr>
                 {% for stat in category_stats %}
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
                         <span>{{ stat.category }}</span>
-                        <strong>${{ "%.2f"|format(stat.amount) }}</strong>
+                        <strong>{{ stat.amount }}</strong>
                     </div>
                     <div class="progress">
                         <div class="progress-bar bg-{{ stat.color }}"
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const value = context.raw;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = ((value / total) * 100).toFixed(1);
-                            return `${context.label}: $${value.toFixed(2)} (${percentage}%)`;
+                            return `${context.label}: ${value.toFixed(2)} (${percentage}%)`;
                         }
                     }
                 }

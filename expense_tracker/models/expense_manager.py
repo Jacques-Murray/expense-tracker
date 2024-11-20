@@ -1,18 +1,19 @@
 """
 Module for managing expenses, including CRUD operations and analysis.
 """
-from datetime import datetime
-from decimal import Decimal
-from typing import List, Dict, Optional
 import json
 import os
+from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
+from typing import Dict, List, Optional
 
 from .expense import Expense
 
+
 class ExpenseManager:
     """Manages expense operations including storage, retrieval, and analysis."""
-    
+
     def __init__(self, storage_path: Optional[str] = None):
         """Initialize ExpenseManager with optional storage path."""
         if storage_path is None:
@@ -84,34 +85,42 @@ class ExpenseManager:
 
     def get_expenses_by_category(self, category: str) -> List[Expense]:
         """Get expenses filtered by category."""
-        return [expense for expense in self.expenses if expense.category.lower() == category.lower()]
+        return [
+            expense
+            for expense in self.expenses
+            if expense.category.lower() == category.lower()
+        ]
 
     def get_total_expenses(self) -> Decimal:
         """Get total of all expenses."""
-        return sum((expense.amount for expense in self.expenses), Decimal('0'))
+        return sum((expense.amount for expense in self.expenses), Decimal("0"))
 
     def get_category_totals(self) -> Dict[str, Decimal]:
         """Get total expenses by category."""
-        totals = {}
+        totals: Dict[str, Decimal] = {}
         for expense in self.expenses:
             totals[expense.category] = totals.get(expense.category, Decimal('0')) + expense.amount
         return totals
 
-    def get_expenses_by_date_range(self, start_date: datetime, end_date: datetime) -> List[Expense]:
+    def get_expenses_by_date_range(
+        self, start_date: datetime, end_date: datetime
+    ) -> List[Expense]:
         """Get expenses within a date range."""
         return [
-            expense for expense in self.expenses
+            expense
+            for expense in self.expenses
             if start_date <= expense.date <= end_date
         ]
 
     def get_monthly_expenses(self, year: int, month: int) -> List[Expense]:
         """Get expenses for a specific month."""
         return [
-            expense for expense in self.expenses
+            expense
+            for expense in self.expenses
             if expense.date.year == year and expense.date.month == month
         ]
 
     def get_monthly_total(self, year: int, month: int) -> Decimal:
         """Get total expenses for a specific month."""
         monthly_expenses = self.get_monthly_expenses(year, month)
-        return sum((expense.amount for expense in monthly_expenses), Decimal('0'))
+        return sum((expense.amount for expense in monthly_expenses), Decimal("0"))

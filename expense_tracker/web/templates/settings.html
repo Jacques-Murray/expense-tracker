@@ -23,13 +23,13 @@
                 <div class="mb-3">
                     <label for="date_format" class="form-label">Date Format</label>
                     <select class="form-select" id="date_format" name="date_format">
-                        {% for format, example in date_formats.items() %}
+                        {% for format, info in date_formats.items() %}
                         <option value="{{ format }}" {% if format == current_date_format %}selected{% endif %}>
-                            {{ format }} ({{ example }})
+                            {{ info.description }} (Example: {{ info.example }})
                         </option>
                         {% endfor %}
                     </select>
-                    <div class="form-text">Choose how dates should be displayed.</div>
+                    <div class="form-text">Choose how dates should be displayed throughout the application.</div>
                 </div>
 
                 <!-- Monthly Budget -->

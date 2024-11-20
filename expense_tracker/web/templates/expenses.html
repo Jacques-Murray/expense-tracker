@@ -57,7 +57,7 @@
                         <tbody>
                             {% for expense in expenses %}
                             <tr>
-                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ expense.date|format_date }}</td>
                                 <td>
                                     <span class="badge bg-{{ category_colors[expense.category] }}">
                                         {{ expense.category }}

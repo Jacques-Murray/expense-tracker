@@ -3,149 +3,171 @@
 {% block title %}Dashboard - Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Monthly Overview</h5>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonth">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="currentMonth">
-                        {{ current_month }}
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonth">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
+<div class="container mt-4">
+    <!-- Monthly Overview -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{{ current_month }} Overview</h2>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <!-- Monthly Total -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Total</h5>
+                    <p class="card-text">
+                        <strong>{{ monthly_total }}</strong>
+                    </p>
                 </div>
-            </div>
-            <div class="card-body">
-                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Recent Expenses</h5>
+        <!-- Daily Average -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Daily Average</h5>
+                    <p class="card-text">
+                        <strong>{{ daily_average }}</strong>
+                    </p>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th class="text-end">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for expense in recent_expenses %}
-                            <tr>
-                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    <span class="badge bg-{{ category_colors[expense.category] }}">
-                                        {{ expense.category }}
-                                    </span>
-                                </td>
-                                <td>{{ expense.description }}</td>
-                                <td class="text-end">${{ "%.2f"|format(expense.amount) }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        </div>
+
+        <!-- Budget Progress -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Budget Usage</h5>
+                    <div class="progress">
+                        <div class="progress-bar {% if budget_percentage > 80 %}bg-danger{% elif budget_percentage > 60 %}bg-warning{% else %}bg-success{% endif %}"
+                            role="progressbar" style="width: {{ budget_percentage }}%"
+                            aria-valuenow="{{ budget_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ budget_percentage }}%
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Quick Add Expense</h5>
-            </div>
-            <div class="card-body">
-                <form id="quickAddForm" method="POST" action="{{ url_for('add_expense') }}">
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
-                        <select class="form-select" id="category" name="category" required>
-                            {% for category in categories %}
-                            <option value="{{ category }}">{{ category }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Add Expense</button>
-                </form>
+    <!-- Daily Expenses Chart -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Daily Expenses</h5>
+                    <canvas id="dailyExpensesChart"></canvas>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Monthly Summary</h5>
+    <!-- Quick Add Expense -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Add Expense</h5>
+                    <form id="quickAddExpenseForm" method="POST" action="{{ url_for('add_expense') }}"
+                        class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="amount" class="form-label">Amount</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="description" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Add</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between mb-3">
-                    <span>Total Expenses:</span>
-                    <strong>${{ "%.2f"|format(monthly_total) }}</strong>
-                </div>
-                <div class="d-flex justify-content-between mb-3">
-                    <span>Daily Average:</span>
-                    <strong>${{ "%.2f"|format(daily_average) }}</strong>
-                </div>
-                <div class="progress">
-                    <div class="progress-bar bg-success" style="width: {{ budget_percentage }}%">
-                        {{ budget_percentage }}%
+        </div>
+    </div>
+
+    <!-- Recent Expenses -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Expenses</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in recent_expenses %}
+                                <tr>
+                                    <td>{{ expense.date|format_date }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ category_colors[expense.category] }}">
+                                            {{ expense.category }}
+                                        </span>
+                                    </td>
+                                    <td>{{ expense.description }}</td>
+                                    <td>{{ expense.amount }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <small class="text-muted">Monthly budget usage</small>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Chart Initialization -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: {{ dates|tojson }},
-            datasets: [{
-                label: 'Daily Expenses',
-                data: {{ daily_expenses|tojson }},
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value;
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('dailyExpensesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ dates|tojson }},
+                datasets: [{
+                    label: 'Daily Expenses',
+                    data: {{ daily_expenses|tojson }},
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     });
-});
 </script>
 {% endblock %}

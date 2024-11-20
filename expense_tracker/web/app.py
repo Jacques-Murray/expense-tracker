@@ -2,14 +2,25 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Dict
-import json
 
-from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, session
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from expense_tracker.models.expense_manager import ExpenseManager
 from expense_tracker.web.config import (
-    CURRENCIES, DATE_FORMATS, DEFAULT_CURRENCY,
-    DEFAULT_DATE_FORMAT, DEFAULT_BUDGET, CurrencyConfig
+    CURRENCIES,
+    DATE_FORMATS,
+    DEFAULT_BUDGET,
+    DEFAULT_CURRENCY,
+    DEFAULT_DATE_FORMAT,
 )
 
 app = Flask(__name__)
@@ -17,6 +28,14 @@ app.secret_key = "your-secret-key-here"  # Change this in production
 
 # Initialize expense manager
 manager = ExpenseManager()
+
+
+@app.template_filter("format_date")
+def format_date_filter(date):
+    """Format date according to current regional settings."""
+    date_format = DATE_FORMATS[session.get("date_format", DEFAULT_DATE_FORMAT)]
+    return date.strftime(date_format)
+
 
 # Category colors for badges
 CATEGORY_COLORS = {
@@ -28,32 +47,43 @@ CATEGORY_COLORS = {
     "Others": "secondary",
 }
 
+
 def get_current_settings():
     """Get current user settings with defaults."""
     return {
-        'currency': session.get('currency', DEFAULT_CURRENCY),
-        'date_format': session.get('date_format', DEFAULT_DATE_FORMAT),
-        'monthly_budget': session.get('monthly_budget', DEFAULT_BUDGET)
+        "currency": session.get("currency", DEFAULT_CURRENCY),
+        "date_format": session.get("date_format", DEFAULT_DATE_FORMAT),
+        "monthly_budget": session.get("monthly_budget", DEFAULT_BUDGET),
     }
+
 
 def format_amount(amount: Decimal) -> str:
     """Format amount according to current currency settings."""
-    currency = CURRENCIES[session.get('currency', DEFAULT_CURRENCY)]
+    currency = CURRENCIES[session.get("currency", DEFAULT_CURRENCY)]
     formatted = f"{float(amount):,.2f}"
-    
-    if currency.decimal_separator != '.':
-        formatted = formatted.replace('.', currency.decimal_separator)
-    if currency.thousands_separator != ',':
-        formatted = formatted.replace(',', currency.thousands_separator)
-    
-    if currency.position == 'prefix':
-        return f"{currency.symbol}{formatted}"
+
+    # Handle separators
+    if currency.decimal_separator != ".":
+        formatted = formatted.replace(".", currency.decimal_separator)
+    if currency.thousands_separator != ",":
+        formatted = formatted.replace(",", currency.thousands_separator)
+
+    # Format with currency symbol
+    if currency.position == "prefix":
+        # No space for USD, GBP
+        if currency.code in ["USD", "GBP"]:
+            return f"{currency.symbol}{formatted}"
+        # Single space for others
+        return f"{currency.symbol} {formatted}"
+    # Space before symbol for suffix position
     return f"{formatted} {currency.symbol}"
+
 
 def format_date(date: datetime) -> str:
     """Format date according to current regional settings."""
-    date_format = DATE_FORMATS[session.get('date_format', DEFAULT_DATE_FORMAT)]
+    date_format = DATE_FORMATS[session.get("date_format", DEFAULT_DATE_FORMAT)]
     return date.strftime(date_format)
+
 
 @app.route("/")
 def index():
@@ -62,6 +92,10 @@ def index():
     start_date = datetime(current_date.year, current_date.month, 1)
     end_date = (start_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
+    # Get current settings
+    settings = get_current_settings()
+    monthly_budget = Decimal(str(settings["monthly_budget"]))
+
     # Get expenses for the current month
     expenses = manager.get_expenses()
     monthly_expenses = [e for e in expenses if start_date <= e.date <= end_date]
@@ -69,7 +103,22 @@ def index():
     # Calculate statistics
     monthly_total = sum(e.amount for e in monthly_expenses)
     daily_average = monthly_total / end_date.day if monthly_expenses else Decimal("0")
-    budget_percentage = min(int((monthly_total / Decimal("1000")) * 100), 100)
+    budget_percentage = (
+        min(int((monthly_total / monthly_budget) * 100), 100) if monthly_budget else 0
+    )
+
+    # Format recent expenses
+    recent_expenses = []
+    for expense in sorted(expenses, key=lambda x: x.date, reverse=True)[:5]:
+        recent_expenses.append(
+            {
+                "date": expense.date,
+                "description": expense.description,
+                "category": expense.category,
+                "category_color": CATEGORY_COLORS.get(expense.category, "secondary"),
+                "amount": format_amount(expense.amount),
+            }
+        )
 
     # Prepare data for the chart
     dates = []
@@ -86,14 +135,13 @@ def index():
     return render_template(
         "index.html",
         current_month=start_date.strftime("%B %Y"),
-        recent_expenses=sorted(expenses, key=lambda x: x.date, reverse=True)[:5],
+        recent_expenses=recent_expenses,
         monthly_total=format_amount(monthly_total),
         daily_average=format_amount(daily_average),
         budget_percentage=budget_percentage,
+        monthly_budget=format_amount(monthly_budget),
         dates=dates,
         daily_expenses=daily_expenses,
-        categories=list(CATEGORY_COLORS.keys()),
-        category_colors=CATEGORY_COLORS,
     )
 
 
@@ -185,8 +233,8 @@ def add_expense():
         return jsonify({"success": False, "message": str(e)}), 400
 
 
-@app.route("/api/expenses/<int:expense_id>", methods=["DELETE"])
-def delete_expense(expense_id: int):
+@app.route("/api/expenses/<expense_id>", methods=["DELETE"])
+def delete_expense(expense_id: str):
     """Delete an expense."""
     try:
         manager.delete_expense(expense_id)
@@ -257,43 +305,53 @@ def dashboard_data():
 def settings():
     """Render the settings page."""
     current = get_current_settings()
-    
-    # Generate date format examples
+
+    # Generate date format examples with descriptions
     date_examples = {
-        format_name: datetime.now().strftime(format_str)
+        format_name: {
+            "example": datetime.now().strftime(format_str),
+            "description": {
+                "US": "American (MM/DD/YYYY)",
+                "EU": "European (DD/MM/YYYY)",
+                "ISO": "International (YYYY-MM-DD)",
+                "UK": "British (DD/MM/YYYY)",
+                "JP": "Japanese (YYYY/MM/DD)",
+                "ZA": "South African (YYYY/MM/DD)",
+            }[format_name],
+        }
         for format_name, format_str in DATE_FORMATS.items()
     }
-    
+
     return render_template(
         "settings.html",
         currencies=CURRENCIES,
         date_formats=date_examples,
-        current_currency=current['currency'],
-        current_date_format=current['date_format'],
-        monthly_budget=current['monthly_budget'],
-        currency_symbol=CURRENCIES[current['currency']].symbol
+        current_currency=current["currency"],
+        current_date_format=current["date_format"],
+        monthly_budget=current["monthly_budget"],
+        currency_symbol=CURRENCIES[current["currency"]].symbol,
     )
 
 
 @app.route("/settings", methods=["POST"])
 def save_settings():
     """Save user settings."""
-    currency = request.form.get('currency')
-    date_format = request.form.get('date_format')
-    monthly_budget = request.form.get('monthly_budget')
-    
+    currency = request.form.get("currency")
+    date_format = request.form.get("date_format")
+    monthly_budget = request.form.get("monthly_budget")
+
     if currency in CURRENCIES:
-        session['currency'] = currency
+        session["currency"] = currency
     if date_format in DATE_FORMATS:
-        session['date_format'] = date_format
+        session["date_format"] = date_format
     if monthly_budget:
         try:
-            session['monthly_budget'] = float(monthly_budget)
+            session["monthly_budget"] = float(monthly_budget)
         except ValueError:
-            flash('Invalid budget amount', 'error')
-    
-    flash('Settings saved successfully!', 'success')
-    return redirect(url_for('settings'))
+            flash("Invalid budget amount", "error")
+
+    flash("Settings saved successfully!", "success")
+    return redirect(url_for("settings"))
 
 
 if __name__ == "__main__":
