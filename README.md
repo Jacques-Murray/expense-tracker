@@ -14,7 +14,7 @@ A Python-based GUI application for tracking daily expenses with visualization ca
 
 ## Requirements
 
-- Python 3.x
+- Python 3.8 or higher (tested up to Python 3.12)
 - Required packages:
   - pandas
   - matplotlib
