@@ -85,6 +85,14 @@ def format_date(date: datetime) -> str:
     return date.strftime(date_format)
 
 
+# Make functions available to templates
+app.jinja_env.globals.update(
+    format_amount=format_amount,
+    format_date=format_date,
+    get_current_settings=get_current_settings,
+)
+
+
 @app.route("/")
 def index():
     """Render the dashboard page."""
